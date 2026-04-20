@@ -11,7 +11,7 @@ CSRF_TRUSTED_ORIGINS = ['https://web-production-fdaed.up.railway.app']
 # ── Security ─────────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='change-this-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*').split(',')
+ALLOWED_HOSTS =  ['web-production-fdaed.up.railway.app']
 # ── Apps ──────────────────────────────────────────────────────
 INSTALLED_APPS = [
     'django.contrib.admin',
