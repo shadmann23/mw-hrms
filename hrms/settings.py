@@ -7,7 +7,7 @@ from pathlib import Path
 from decouple import config
 import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+CSRF_TRUSTED_ORIGINS = ['https://web-production-fdaed.up.railway.app']
 # ── Security ─────────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY', default='change-this-in-production')
 DEBUG = config('DEBUG', default=True, cast=bool)
