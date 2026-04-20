@@ -20,9 +20,7 @@ class Command(BaseCommand):
             self._create_teams()
         self.stdout.write(self.style.SUCCESS('\n✓ Seed data created successfully.\n'))
         self.stdout.write('Demo credentials:')
-        self.stdout.write('  admin      / admin123')
-        self.stdout.write('  supervisor / super123')
-        self.stdout.write('  employee   / emp123\n')
+        self.stdout.write('  admin      / 987admin123')
 
     def _create_roles(self):
         from apps.accounts.models import Role
