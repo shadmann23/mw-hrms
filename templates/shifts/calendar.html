@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Shift Calendar{% endblock %}
+{% block page_title %}Shift Calendar{% endblock %}
+{% block nav_shifts %}active{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.10/index.global.min.css" rel="stylesheet">
+<style>
+.fc{font-family:'DM Sans',sans-serif}
+.fc-toolbar-title{font-size:1rem!important;font-weight:600}
+.fc-button{font-family:'DM Sans',sans-serif!important;font-size:.8rem!important}
+.fc-button-primary{background:var(--accent)!important;border-color:var(--accent)!important}
+.fc-button-primary:hover{background:var(--accent-hover)!important}
+.fc-event{font-size:.75rem;border-radius:4px}
+.calendar-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+@media(max-width:900px){.calendar-layout{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calendar-layout">
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+        {% if request.user.is_admin or request.user.is_supervisor %}
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Assign Shift</h3></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'shifts:assign' %}" class="styled-form" id="assignForm">
+                    {% csrf_token %}
+                    <div class="form-field">
+                        <label class="field-label">Employee</label>
+                        <select name="employee" class="form-control" required>
+                            <option value="">Select employee…</option>
+                            {% for emp in assignable_employees %}
+                            <option value="{{ emp.pk }}">{{ emp.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if not assignable_employees %}
+                        <span class="field-hint" style="color:var(--warning)">No employees found. Add employees first.</span>
+                        {% endif %}
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label">Shift</label>
+                        <select name="shift" class="form-control" required>
+                            <option value="">Select shift…</option>
+                            {% for shift in shifts %}
+                            <option value="{{ shift.pk }}">{{ shift.name }} ({{ shift.start_time|time:"H:i" }}–{{ shift.end_time|time:"H:i" }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label">Date</label>
+                        <input type="date" name="date" id="assignDate" class="form-control" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label">Notes <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="notes" class="form-control" placeholder="e.g. Cover for absence">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Assign Shift</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Shift Legend</h3></div>
+            <div class="card-body">
+                {% for shift in shifts %}
+                <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem;">
+                    <span style="width:12px;height:12px;border-radius:3px;background:{{ shift.color }};flex-shrink:0;display:inline-block;"></span>
+                    <span style="font-weight:500;">{{ shift.name }}</span>
+                    <span class="text-muted">{{ shift.start_time|time:"H:i" }}–{{ shift.end_time|time:"H:i" }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted" style="font-size:.82rem;">No shift templates configured.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/6.1.10/index.global.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cal = new FullCalendar.Calendar(document.getElementById('calendar'), {
+        initialView: 'dayGridMonth',
+        headerToolbar: {left:'prev,next today',center:'title',right:'dayGridMonth,timeGridWeek,listWeek'},
+        events: '{% url "shifts:events_api" %}',
+        eventClick: function(info) {
+            const p = info.event.extendedProps;
+            alert(`${info.event.title}\n${p.notes ? 'Notes: ' + p.notes : ''}`);
+        },
+        dateClick: function(info) {
+            const d = document.getElementById('assignDate');
+            if (d) {
+                d.value = info.dateStr;
+                document.getElementById('assignForm')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+                d.style.borderColor = 'var(--accent)';
+                setTimeout(() => d.style.borderColor = '', 2000);
+            }
+        },
+        height: 'auto',
+        eventTimeFormat: {hour:'2-digit', minute:'2-digit', hour12:false},
+    });
+    cal.render();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Support Categories{% endblock %}
+{% block page_title %}Support Categories{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'sysadmin:dashboard' %}" class="filter-btn">Overview</a>
+    <a href="{% url 'sysadmin:roles' %}" class="filter-btn">Role Management</a>
+    <a href="{% url 'sysadmin:departments' %}" class="filter-btn">Departments</a>
+    <a href="{% url 'sysadmin:leave_types' %}" class="filter-btn">Leave Types</a>
+    <a href="{% url 'sysadmin:shift_templates' %}" class="filter-btn">Shift Templates</a>
+    <a href="{% url 'sysadmin:support_cats' %}" class="filter-btn active">Support Categories</a>
+    <a href="{% url 'sysadmin:bulk_actions' %}" class="filter-btn">Bulk Actions</a>
+    <a href="{% url 'sysadmin:system_info' %}" class="filter-btn">System Info</a>
+</div>
+
+<div class="page-toolbar">
+    <h3 style="font-size:.9rem;font-weight:600;">{{ categories|length }} Categories</h3>
+    <button class="btn btn-primary" onclick="document.getElementById('createCatModal').style.display='flex'">+ New Category</button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="data-table">
+            <thead><tr><th>Name</th><th>Icon</th><th>Tickets</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td><strong>{{ cat.name }}</strong></td>
+                    <td class="text-mono text-muted">{{ cat.icon }}</td>
+                    <td><span class="badge badge-neutral">{{ cat.ticket_count }}</span></td>
+                    <td>
+                        <form method="post" action="{% url 'sysadmin:support_cats' %}" onsubmit="return confirm('Delete this category?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="delete">
+                            <input type="hidden" name="pk" value="{{ cat.pk }}">
+                            <button type="submit" class="btn btn-ghost btn-xs" style="color:var(--danger);" {% if cat.ticket_count %}disabled title="Cannot delete — has {{ cat.ticket_count }} tickets"{% endif %}>Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="createCatModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:400px;max-width:95vw;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Create Category</h3>
+        <form method="post" action="{% url 'sysadmin:support_cats' %}" class="styled-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="form-field"><label class="field-label">Category Name</label><input type="text" name="name" class="form-control" required></div>
+            <div class="form-field"><label class="field-label">Feather Icon Name</label><input type="text" name="icon" class="form-control" value="help-circle" placeholder="e.g. monitor, book, home"></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('createCatModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

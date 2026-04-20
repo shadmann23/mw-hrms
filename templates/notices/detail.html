@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ notice.title }}{% endblock %}
+{% block page_title %}Notice{% endblock %}
+{% block nav_notices %}active{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+    <div class="detail-main">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <div style="display:flex;gap:6px;margin-bottom:8px;">
+                        <span class="badge badge-{{ notice.priority }}">{{ notice.get_priority_display }}</span>
+                        <span class="badge badge-neutral">{{ notice.get_visibility_display }}</span>
+                    </div>
+                    <h2 style="font-size:1.15rem;font-weight:700;">{{ notice.title }}</h2>
+                    <p class="text-muted" style="font-size:0.82rem;margin-top:4px;">
+                        Posted by {{ notice.created_by.get_full_name }} on {{ notice.publish_date|date:"M d, Y" }}
+                    </p>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="font-size:0.95rem;line-height:1.75;color:var(--text-2);white-space:pre-wrap;">{{ notice.content }}</div>
+                {% if notice.attachment %}
+                <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                    <a href="{{ notice.attachment.url }}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;color:var(--accent-2);font-size:0.85rem;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                        Download Attachment
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-sidebar">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Notice Info</h3></div>
+            <div class="card-body">
+                <dl class="detail-list">
+                    <dt>Priority</dt><dd><span class="badge badge-{{ notice.priority }}">{{ notice.get_priority_display }}</span></dd>
+                    <dt>Audience</dt><dd>{{ notice.get_visibility_display }}</dd>
+                    <dt>Published</dt><dd>{{ notice.publish_date|date:"M d, Y" }}</dd>
+                    {% if notice.expiry_date %}<dt>Expires</dt><dd>{{ notice.expiry_date|date:"M d, Y" }}</dd>{% endif %}
+                    <dt>Views</dt><dd>{{ notice.views_count }}</dd>
+                    <dt>Posted By</dt><dd>{{ notice.created_by.get_full_name }}</dd>
+                </dl>
+            </div>
+        </div>
+        <a href="{% url 'notices:list' %}" class="btn btn-ghost btn-full">← Back to Notices</a>
+    </div>
+</div>
+{% endblock %}

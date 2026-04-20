@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}System Info{% endblock %}
+{% block page_title %}System Information{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'sysadmin:dashboard' %}" class="filter-btn">Overview</a>
+    <a href="{% url 'sysadmin:roles' %}" class="filter-btn">Role Management</a>
+    <a href="{% url 'sysadmin:departments' %}" class="filter-btn">Departments</a>
+    <a href="{% url 'sysadmin:leave_types' %}" class="filter-btn">Leave Types</a>
+    <a href="{% url 'sysadmin:shift_templates' %}" class="filter-btn">Shift Templates</a>
+    <a href="{% url 'sysadmin:support_cats' %}" class="filter-btn">Support Categories</a>
+    <a href="{% url 'sysadmin:bulk_actions' %}" class="filter-btn">Bulk Actions</a>
+    <a href="{% url 'sysadmin:system_info' %}" class="filter-btn active">System Info</a>
+</div>
+
+{% if debug_mode %}
+<div style="background:var(--warning-light);border:1px solid #fcd34d;border-radius:var(--radius);padding:10px 16px;margin-bottom:20px;font-size:.82rem;color:#92400e;">
+    ⚠ <strong>DEBUG mode is ON.</strong> Disable it in production by setting <code>DEBUG=False</code> in your .env file.
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Runtime Environment</h3></div>
+        <div class="card-body p-0">
+            <table class="data-table">
+                <tbody>
+                    <tr><td style="font-weight:500;width:40%;">Python</td><td class="text-mono" style="font-size:.82rem;">{{ python_version|truncatechars:40 }}</td></tr>
+                    <tr><td style="font-weight:500;">Django</td><td class="text-mono">{{ django_version }}</td></tr>
+                    <tr><td style="font-weight:500;">Database</td><td class="text-mono">{{ database_engine }} / {{ database_name }}</td></tr>
+                    <tr><td style="font-weight:500;">Debug Mode</td><td>{% if debug_mode %}<span class="badge badge-warning">ON</span>{% else %}<span class="badge badge-success">OFF</span>{% endif %}</td></tr>
+                    <tr><td style="font-weight:500;">Time Zone</td><td class="text-mono">{{ time_zone }}</td></tr>
+                    <tr><td style="font-weight:500;">Language</td><td class="text-mono">{{ language_code }}</td></tr>
+                    <tr><td style="font-weight:500;">Allowed Hosts</td><td class="text-mono" style="font-size:.78rem;">{{ allowed_hosts|join:", " }}</td></tr>
+                    <tr><td style="font-weight:500;">Media Root</td><td class="text-mono" style="font-size:.78rem;word-break:break-all;">{{ media_root }}</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Installed Apps</h3></div>
+        <div class="card-body p-0">
+            {% for app in installed_apps %}
+            <div style="padding:7px 16px;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:.78rem;color:{% if 'apps.' in app %}var(--accent){% else %}var(--text-2){% endif %};">
+                {% if 'apps.' in app %}⚙ {% endif %}{{ app }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

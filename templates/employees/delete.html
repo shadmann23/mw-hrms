@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ employee.full_name }}{% endblock %}
+{% block page_title %}Permanently Delete Employee{% endblock %}
+{% block nav_employees %}active{% endblock %}
+
+{% block content %}
+<div style="max-width:580px;margin:0 auto;">
+
+    <!-- Danger Banner -->
+    <div style="background:var(--danger-light);border:2px solid var(--danger);border-radius:var(--radius-lg);padding:18px 20px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <strong style="color:var(--danger);font-size:.95rem;">IRREVERSIBLE ACTION — Cannot be undone</strong>
+        </div>
+        <p style="font-size:.85rem;color:#991b1b;line-height:1.6;">This will <strong>permanently delete</strong> all data for this employee including their user account, attendance records, leave history, and support tickets. This cannot be recovered.</p>
+        <p style="font-size:.82rem;color:#991b1b;margin-top:8px;font-weight:500;">Consider using <strong>Terminate</strong> instead — it disables access while preserving all records.</p>
+    </div>
+
+    <!-- Employee Card -->
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-body" style="display:flex;align-items:center;gap:16px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--danger-light);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;">
+                {{ employee.user.first_name|first|upper }}{{ employee.user.last_name|first|upper }}
+            </div>
+            <div>
+                <strong style="font-size:1rem;">{{ employee.full_name }}</strong>
+                <p class="text-muted" style="font-size:.85rem;">{{ employee.position.title|default:"—" }} · {{ employee.department.name|default:"—" }}</p>
+                <p style="font-size:.78rem;margin-top:4px;">
+                    <span class="text-mono" style="background:var(--danger-light);color:var(--danger);padding:2px 8px;border-radius:4px;font-weight:600;">{{ employee.employee_id }}</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- What will be deleted summary -->
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-header"><h3 class="card-title" style="color:var(--danger);">What will be permanently deleted</h3></div>
+        <div class="card-body p-0">
+            <table class="data-table">
+                <tbody>
+                    <tr><td style="font-weight:500;">User account</td><td class="text-muted">@{{ employee.user.username }}</td></tr>
+                    <tr><td style="font-weight:500;">Employee profile</td><td class="text-muted">ID: {{ employee.employee_id }}</td></tr>
+                    <tr><td style="font-weight:500;">Attendance records</td><td class="text-muted">All check-in/out history</td></tr>
+                    <tr><td style="font-weight:500;">Leave requests</td><td class="text-muted">All approved & pending leaves</td></tr>
+                    <tr><td style="font-weight:500;">Support tickets</td><td class="text-muted">All submitted tickets</td></tr>
+                    <tr><td style="font-weight:500;">Notifications</td><td class="text-muted">All notification history</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Confirmation Form -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Confirm Deletion</h3></div>
+        <div class="card-body">
+            <form method="post" class="styled-form">
+                {% csrf_token %}
+                <div class="form-field">
+                    <label class="field-label">
+                        Type the Employee ID <span style="font-family:'DM Mono',monospace;background:var(--surface-2);padding:2px 8px;border-radius:4px;font-weight:600;">{{ employee.employee_id }}</span> to confirm
+                    </label>
+                    <input type="text" name="confirm_delete" class="form-control"
+                        placeholder="Type Employee ID here…"
+                        autocomplete="off" spellcheck="false"
+                        style="font-family:'DM Mono',monospace;font-size:1rem;letter-spacing:.04em;"
+                        id="confirmInput">
+                    <span class="field-hint" id="confirmHint" style="color:var(--danger);display:none;">
+                        ✗ Employee ID doesn't match
+                    </span>
+                </div>
+                <div class="form-actions">
+                    <a href="{% url 'employees:detail' employee.pk %}" class="btn btn-ghost">Cancel — Keep Employee</a>
+                    <button type="submit" class="btn btn-danger" id="deleteBtn" disabled style="opacity:.5;cursor:not-allowed;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        Permanently Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+const input = document.getElementById('confirmInput');
+const btn = document.getElementById('deleteBtn');
+const hint = document.getElementById('confirmHint');
+const expected = '{{ employee.employee_id }}';
+
+input.addEventListener('input', () => {
+    const match = input.value.trim() === expected;
+    btn.disabled = !match;
+    btn.style.opacity = match ? '1' : '.5';
+    btn.style.cursor = match ? 'pointer' : 'not-allowed';
+    if (input.value.length > 0 && !match) {
+        hint.style.display = 'block';
+        input.style.borderColor = 'var(--danger)';
+    } else {
+        hint.style.display = 'none';
+        input.style.borderColor = match ? 'var(--success)' : '';
+    }
+});
+</script>
+{% endblock %}

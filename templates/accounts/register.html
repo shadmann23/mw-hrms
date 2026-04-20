@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account — MilkWays Limited</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body class="auth-body">
+
+<div class="auth-wrap">
+
+  <!-- LEFT BRANDING PANEL -->
+  <div class="auth-left">
+    <div class="auth-shapes">
+      <div class="auth-shape auth-shape-1"></div>
+      <div class="auth-shape auth-shape-2"></div>
+      <div class="auth-shape auth-shape-3"></div>
+    </div>
+    <div class="auth-content">
+            <div class="auth-logo">
+        <img src="{% static 'images/logo.png' %}" alt="MilkWays Limited" style="max-width:200px;width:100%;height:auto;display:block;">
+      </div>
+      <h2 class="auth-headline">Join<br><em>MilkWays</em><br>Create Your Account For Full Access<br></h2>
+      <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:20px;margin-top:32px;">
+        <p style="font-size:0.8rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:14px;">How To Creat Your Account</p>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:rgba(140,199,196,0.3);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#8CC7C4;flex-shrink:0;">1</div>
+            <p style="font-size:0.82rem;color:rgba(255,255,255,0.6);line-height:1.5;">Fill in your details and submit the form</p>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:rgba(140,199,196,0.3);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#8CC7C4;flex-shrink:0;">2</div>
+            <p style="font-size:0.82rem;color:rgba(255,255,255,0.6);line-height:1.5;">Your HR administrator will review your request</p>
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:12px;">
+            <div style="width:22px;height:22px;border-radius:50%;background:rgba(140,199,196,0.3);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#8CC7C4;flex-shrink:0;">3</div>
+            <p style="font-size:0.82rem;color:rgba(255,255,255,0.6);line-height:1.5;">Once approved, you can log in and get started</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM PANEL -->
+  <div class="auth-right">
+    <div class="auth-form-box">
+
+      <div class="auth-form-head">
+        <h1>Create account</h1>
+        <p>Register for MilkWays Limited HRMS access</p>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+        <div class="auth-err">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label class="field-label">First Name</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}<span class="field-error">{{ form.first_name.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="form-field">
+            <label class="field-label">Last Name</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}<span class="field-error">{{ form.last_name.errors.0 }}</span>{% endif %}
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Username</label>
+          {{ form.username }}
+          {% if form.username.errors %}<span class="field-error">{{ form.username.errors.0 }}</span>{% endif %}
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Work Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-field">
+            <label class="field-label">Password</label>
+            <div class="field-wrap">
+              {{ form.password1 }}
+              <button type="button" class="toggle-pwd" aria-label="Toggle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            {% if form.password1.errors %}<span class="field-error">{{ form.password1.errors.0 }}</span>{% endif %}
+          </div>
+          <div class="form-field">
+            <label class="field-label">Confirm Password</label>
+            {{ form.password2 }}
+            {% if form.password2.errors %}<span class="field-error">{{ form.password2.errors.0 }}</span>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">
+          Create Account
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>Already have an account?</span></div>
+      <a href="{% url 'accounts:login' %}" class="btn btn-outline btn-full">Sign In</a>
+
+    </div>
+  </div>
+
+</div>
+
+{% load static %}
+<script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

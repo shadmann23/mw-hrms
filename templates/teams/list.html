@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Teams{% endblock %}
+{% block page_title %}Teams{% endblock %}
+{% block nav_teams %}active{% endblock %}
+
+{% block content %}
+{% if request.user.is_admin %}
+<div class="page-toolbar">
+    <div></div>
+    <button class="btn btn-primary" onclick="document.getElementById('createTeamModal').style.display='flex'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Team
+    </button>
+</div>
+
+<!-- Create Team Modal -->
+<div id="createTeamModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Create New Team</h3>
+        <form method="post" action="{% url 'teams:create' %}" class="styled-form">
+            {% csrf_token %}
+            <div class="form-field">
+                <label class="field-label">Team Name</label>
+                <input type="text" name="name" class="form-control" required placeholder="e.g. Backend Engineering">
+            </div>
+            <div class="form-field">
+                <label class="field-label">Department</label>
+                <select name="department" class="form-control" required>
+                    <option value="">Select department…</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.pk }}">{{ dept.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
+                <label class="field-label">Supervisor</label>
+                <select name="supervisor" class="form-control">
+                    <option value="">Select supervisor…</option>
+                    {% for u in all_users %}
+                    <option value="{{ u.pk }}">{{ u.get_full_name }} ({{ u.role }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
+                <label class="field-label">Description <span class="text-muted">(optional)</span></label>
+                <textarea name="description" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('createTeamModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Team</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+    {% for team in teams %}
+    <a href="{% url 'teams:detail' team.pk %}" class="card" style="display:block;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
+        <div class="card-header">
+            <div>
+                <h3 style="font-size:.95rem;font-weight:600;">{{ team.name }}</h3>
+                <p class="text-muted" style="font-size:.8rem;">{{ team.department.name }}</p>
+            </div>
+            <div class="mini-avatar" style="width:36px;height:36px;font-size:.7rem;flex-shrink:0;">
+                {% if team.supervisor %}{{ team.supervisor.first_name|first }}{{ team.supervisor.last_name|first }}{% else %}?{% endif %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div style="display:flex;justify-content:space-between;font-size:.82rem;color:var(--text-2);">
+                <span><strong>Lead:</strong> {{ team.supervisor.get_full_name|default:"Unassigned" }}</span>
+                <span><strong>{{ team.member_count }}</strong> member{{ team.member_count|pluralize }}</span>
+            </div>
+            {% if team.description %}
+            <p style="font-size:.78rem;color:var(--text-3);margin-top:8px;">{{ team.description|truncatechars:70 }}</p>
+            {% endif %}
+        </div>
+    </a>
+    {% empty %}
+    <div class="empty-state empty-state-lg" style="grid-column:1/-1;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <p>No teams found</p>
+        {% if request.user.is_admin %}<p class="text-muted" style="font-size:.82rem;">Create a team using the button above</p>{% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

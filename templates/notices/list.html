@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Notices{% endblock %}
+{% block page_title %}Notices & Announcements{% endblock %}
+{% block nav_notices %}active{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    {% if request.user.is_admin %}
+    <a href="{% url 'notices:create' %}" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Post Notice
+    </a>
+    {% endif %}
+</div>
+
+<div class="notices-layout">
+    {% if notices %}
+    {% for notice in notices %}
+    <a href="{% url 'notices:detail' notice.pk %}" class="notice-card priority-{{ notice.priority }}">
+        <div class="notice-card-bar"></div>
+        <div class="notice-card-body">
+            <div class="notice-card-header">
+                <div class="notice-badges">
+                    <span class="badge badge-{{ notice.priority }}">{{ notice.get_priority_display }}</span>
+                    <span class="badge badge-neutral">{{ notice.get_visibility_display }}</span>
+                </div>
+                <time class="notice-date">{{ notice.publish_date|date:"M d, Y" }}</time>
+            </div>
+            <h3 class="notice-card-title">{{ notice.title }}</h3>
+            <p class="notice-card-excerpt">{{ notice.content|truncatechars:120 }}</p>
+            <div class="notice-card-footer">
+                <span class="text-muted">Posted by {{ notice.created_by.get_full_name }}</span>
+                <span class="text-muted">{{ notice.views_count }} view{{ notice.views_count|pluralize }}</span>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state empty-state-lg">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <p>No notices at this time</p>
+    </div>
+    {% endif %}
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

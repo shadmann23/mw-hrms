@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+{% block page_title %}Departments{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'sysadmin:dashboard' %}" class="filter-btn">Overview</a>
+    <a href="{% url 'sysadmin:roles' %}" class="filter-btn">Role Management</a>
+    <a href="{% url 'sysadmin:departments' %}" class="filter-btn active">Departments</a>
+    <a href="{% url 'sysadmin:leave_types' %}" class="filter-btn">Leave Types</a>
+    <a href="{% url 'sysadmin:shift_templates' %}" class="filter-btn">Shift Templates</a>
+    <a href="{% url 'sysadmin:support_cats' %}" class="filter-btn">Support Categories</a>
+    <a href="{% url 'sysadmin:bulk_actions' %}" class="filter-btn">Bulk Actions</a>
+    <a href="{% url 'sysadmin:system_info' %}" class="filter-btn">System Info</a>
+</div>
+
+<div class="page-toolbar">
+    <h3 style="font-size:.9rem;font-weight:600;">{{ departments|length }} Department{{ departments|length|pluralize }}</h3>
+    <button class="btn btn-primary" onclick="document.getElementById('createDeptModal').style.display='flex'">+ New Department</button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="data-table data-table-hover">
+            <thead><tr><th>Code</th><th>Name</th><th>Head</th><th>Employees</th><th>Positions</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for dept in departments %}
+                <tr>
+                    <td class="text-mono font-bold">{{ dept.code }}</td>
+                    <td><strong>{{ dept.name }}</strong>{% if dept.description %}<p class="text-muted" style="font-size:.75rem;margin-top:2px;">{{ dept.description|truncatechars:40 }}</p>{% endif %}</td>
+                    <td>{{ dept.head.get_full_name|default:"—" }}</td>
+                    <td><span class="badge badge-neutral">{{ dept.emp_count }}</span></td>
+                    <td><span class="badge badge-neutral">{{ dept.positions.count }}</span></td>
+                    <td>{% if dept.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-neutral">Inactive</span>{% endif %}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="btn btn-ghost btn-xs" onclick="openEditDept({{ dept.pk }},'{{ dept.name }}','{{ dept.description }}','{{ dept.head.pk|default:'' }}')">Edit</button>
+                            <form method="post" action="{% url 'sysadmin:dept_toggle' dept.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-ghost btn-xs">{% if dept.is_active %}Disable{% else %}Enable{% endif %}</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7"><div class="empty-state" style="padding:24px;"><p>No departments found</p></div></td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createDeptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:460px;max-width:95vw;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Create Department</h3>
+        <form method="post" action="{% url 'sysadmin:dept_create' %}" class="styled-form">
+            {% csrf_token %}
+            <div class="form-row-2">
+                <div class="form-field"><label class="field-label">Name</label><input type="text" name="name" class="form-control" required placeholder="e.g. Engineering"></div>
+                <div class="form-field"><label class="field-label">Code</label><input type="text" name="code" class="form-control" required placeholder="e.g. ENG" style="text-transform:uppercase;"></div>
+            </div>
+            <div class="form-field"><label class="field-label">Department Head</label>
+                <select name="head" class="form-control">
+                    <option value="">No head assigned</option>
+                    {% for u in all_users %}<option value="{{ u.pk }}">{{ u.get_full_name }} ({{ u.role }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-field"><label class="field-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('createDeptModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editDeptModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:460px;max-width:95vw;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Edit Department</h3>
+        <form method="post" id="editDeptForm" class="styled-form">
+            {% csrf_token %}
+            <div class="form-field"><label class="field-label">Name</label><input type="text" name="name" id="editDeptName" class="form-control" required></div>
+            <div class="form-field"><label class="field-label">Department Head</label>
+                <select name="head" id="editDeptHead" class="form-control">
+                    <option value="">No head assigned</option>
+                    {% for u in all_users %}<option value="{{ u.pk }}">{{ u.get_full_name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-field"><label class="field-label">Description</label><textarea name="description" id="editDeptDesc" class="form-control" rows="2"></textarea></div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('editDeptModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditDept(pk, name, desc, headPk) {
+    document.getElementById('editDeptForm').action = `/sysadmin/departments/${pk}/edit/`;
+    document.getElementById('editDeptName').value = name;
+    document.getElementById('editDeptDesc').value = desc;
+    const sel = document.getElementById('editDeptHead');
+    for (let opt of sel.options) { opt.selected = opt.value == headPk; }
+    document.getElementById('editDeptModal').style.display = 'flex';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}New Support Ticket{% endblock %}
+{% block page_title %}Submit Support Ticket{% endblock %}
+{% block nav_support %}active{% endblock %}
+
+{% block content %}
+<div class="form-page-layout">
+    <div class="form-card">
+        <div class="form-card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <h2>New Support Ticket</h2>
+        </div>
+        <form method="post" action="{% url 'support:create' %}" enctype="multipart/form-data" class="styled-form">
+            {% csrf_token %}
+            <div class="form-row-2">
+                <div class="form-field">
+                    <label>Category</label>
+                    {{ form.category }}
+                    {% if form.category.errors %}<span class="field-error">{{ form.category.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-field">
+                    <label>Priority</label>
+                    {{ form.priority }}
+                    {% if form.priority.errors %}<span class="field-error">{{ form.priority.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Subject</label>
+                {{ form.subject }}
+                {% if form.subject.errors %}<span class="field-error">{{ form.subject.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-field">
+                <label>Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}<span class="field-error">{{ form.description.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-field">
+                <label>Attachment <span class="text-muted">(optional)</span></label>
+                {{ form.attachment }}
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'support:list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">Submit Ticket</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-sidebar">
+        <div class="info-card">
+            <h4>Before You Submit</h4>
+            <p style="font-size:0.82rem;color:var(--text-2);line-height:1.6;">
+                Please provide as much detail as possible so our team can assist you quickly.
+            </p>
+            <div style="margin-top:12px;">
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--danger);flex-shrink:0;"></span>
+                    <span><strong>Critical</strong> — System down</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--warning);flex-shrink:0;"></span>
+                    <span><strong>High</strong> — Major issue</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.8rem;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-2);flex-shrink:0;"></span>
+                    <span><strong>Medium</strong> — Minor issue</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;padding:8px 0;font-size:0.8rem;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:var(--border-2);flex-shrink:0;"></span>
+                    <span><strong>Low</strong> — General question</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

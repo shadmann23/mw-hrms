@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}Attendance Report{% endblock %}
+{% block page_title %}Attendance Report{% endblock %}
+{% block nav_attendance %}active{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <form method="get" class="search-form">
+        <input type="date" name="date" value="{{ selected_date }}" class="form-control form-control-sm">
+        <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+        {% if not is_today %}
+        <a href="{% url 'attendance:report' %}" class="btn btn-ghost btn-sm">Today</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="kpi-grid kpi-grid-3" style="margin-bottom:20px;">
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ present_count }}</span>
+            <span class="kpi-label">Present / Late</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ late_count }}</span>
+            <span class="kpi-label">Late</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ absent_count }}</span>
+            <span class="kpi-label">Not Checked In</span>
+        </div>
+    </div>
+</div>
+
+<!-- Checked-in employees -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-header">
+        <h3 class="card-title">Checked In — {{ display_date|date:"M d, Y" }}</h3>
+        <span class="badge badge-neutral">{{ today_records|length }} record{{ today_records|length|pluralize }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if today_records %}
+        <table class="data-table data-table-hover">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Working Hours</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in today_records %}
+                <tr>
+                    <td>
+                        <div class="cell-user">
+                            {% if record.employee.employee_profile and record.employee.employee_profile.avatar %}
+                            <img src="{{ record.employee.employee_profile.avatar.url }}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                            {% else %}
+                            <div class="mini-avatar">{{ record.employee.first_name|first }}{{ record.employee.last_name|first }}</div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ record.employee.get_full_name }}</strong>
+                                <span class="text-muted d-block" style="font-size:.72rem;">{{ record.employee.username }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-mono">{{ record.check_in|time:"H:i"|default:"—" }}</td>
+                    <td class="text-mono">
+                        {% if record.check_out %}
+                            {{ record.check_out|time:"H:i" }}
+                        {% else %}
+                            <span class="badge badge-warning" style="font-size:.72rem;">Still In</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if record.working_hours %}
+                            <span class="text-mono">{{ record.working_hours }}h</span>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge badge-attend-{{ record.status }}">{{ record.get_status_display }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state empty-state-lg">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p>No check-ins recorded for this date</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Absent employees (no check-in record) -->
+{% if absent_employees %}
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title" style="color:var(--danger);">Not Checked In — {{ display_date|date:"M d, Y" }}</h3>
+        <span class="badge badge-danger">{{ absent_count }}</span>
+    </div>
+    <div class="card-body p-0">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Position</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in absent_employees %}
+                <tr>
+                    <td>
+                        <div class="cell-user">
+                            {% if u.employee_profile and u.employee_profile.avatar %}
+                            <img src="{{ u.employee_profile.avatar.url }}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                            {% else %}
+                            <div class="mini-avatar" style="opacity:.5;">{{ u.first_name|first }}{{ u.last_name|first }}</div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ u.get_full_name }}</strong>
+                                <span class="text-muted d-block" style="font-size:.72rem;">{{ u.username }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-muted">{{ u.employee_profile.department.name|default:"—" }}</td>
+                    <td class="text-muted">{{ u.employee_profile.position.title|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

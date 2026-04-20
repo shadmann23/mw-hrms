@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Bulk Actions{% endblock %}
+{% block page_title %}Bulk Actions{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'sysadmin:dashboard' %}" class="filter-btn">Overview</a>
+    <a href="{% url 'sysadmin:roles' %}" class="filter-btn">Role Management</a>
+    <a href="{% url 'sysadmin:departments' %}" class="filter-btn">Departments</a>
+    <a href="{% url 'sysadmin:leave_types' %}" class="filter-btn">Leave Types</a>
+    <a href="{% url 'sysadmin:shift_templates' %}" class="filter-btn">Shift Templates</a>
+    <a href="{% url 'sysadmin:support_cats' %}" class="filter-btn">Support Categories</a>
+    <a href="{% url 'sysadmin:bulk_actions' %}" class="filter-btn active">Bulk Actions</a>
+    <a href="{% url 'sysadmin:system_info' %}" class="filter-btn">System Info</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+    <!-- Broadcast Notification -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Broadcast Notification</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted" style="font-size:.82rem;margin-bottom:16px;">Send a system notification to all active users at once.</p>
+            <form method="post" action="{% url 'sysadmin:bulk_actions' %}" class="styled-form">
+                {% csrf_token %}
+                <input type="hidden" name="bulk_action" value="notify_all">
+                <div class="form-field"><label class="field-label">Title</label><input type="text" name="title" class="form-control" required placeholder="e.g. System Maintenance Notice"></div>
+                <div class="form-field"><label class="field-label">Message</label><textarea name="message" class="form-control" rows="3" required placeholder="Your message…"></textarea></div>
+                <button type="submit" class="btn btn-primary">Send to All Users</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Reset Leave Balances -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Reset Annual Leave Balances</h3></div>
+        <div class="card-body">
+            <p class="text-muted" style="font-size:.82rem;margin-bottom:16px;">Reset leave balances for all active employees. Use at the start of a new year.</p>
+            <div style="background:var(--warning-light);border:1px solid #fcd34d;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:.8rem;color:#92400e;">
+                ⚠ This overwrites current balances for all active employees.
+            </div>
+            <form method="post" action="{% url 'sysadmin:bulk_actions' %}" class="styled-form" onsubmit="return confirm('Reset leave balances for ALL active employees?')">
+                {% csrf_token %}
+                <input type="hidden" name="bulk_action" value="reset_leave_balances">
+                <div class="form-row-2">
+                    <div class="form-field"><label class="field-label">Annual Leave (days)</label><input type="number" name="annual_days" class="form-control" value="21" min="0" step="0.5"></div>
+                    <div class="form-field"><label class="field-label">Sick Leave (days)</label><input type="number" name="sick_days" class="form-control" value="14" min="0" step="0.5"></div>
+                </div>
+                <button type="submit" class="btn btn-warning" style="background:var(--warning);color:#fff;border-color:var(--warning);">Reset All Balances</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Clear Notifications -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Clean Up Old Notifications</h3></div>
+        <div class="card-body">
+            <p class="text-muted" style="font-size:.82rem;margin-bottom:16px;">Delete read notifications older than 90 days to keep the database clean.</p>
+            <form method="post" action="{% url 'sysadmin:bulk_actions' %}" onsubmit="return confirm('Delete all read notifications older than 90 days?')">
+                {% csrf_token %}
+                <input type="hidden" name="bulk_action" value="clear_old_notifications">
+                <button type="submit" class="btn btn-ghost">Delete Old Notifications</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Terminated Employees -->
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Terminated Employees</h3><span class="badge badge-neutral">{{ terminated_employees|length }}</span></div>
+        <div class="card-body p-0">
+            {% if terminated_employees %}
+            <table class="data-table">
+                <thead><tr><th>Employee</th><th>Status</th><th>Date</th><th>Reason</th></tr></thead>
+                <tbody>
+                    {% for emp in terminated_employees %}
+                    <tr>
+                        <td><a href="{% url 'employees:detail' emp.pk %}" style="font-size:.82rem;font-weight:500;">{{ emp.full_name }}</a><br><span class="text-mono text-muted" style="font-size:.72rem;">{{ emp.employee_id }}</span></td>
+                        <td><span class="badge badge-emp-{{ emp.status }}">{{ emp.get_status_display }}</span></td>
+                        <td class="text-mono" style="font-size:.78rem;">{{ emp.termination_date|date:"M d, Y"|default:"—" }}</td>
+                        <td style="font-size:.78rem;color:var(--text-2);">{{ emp.get_termination_reason_display|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state" style="padding:24px;"><p>No terminated employees</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

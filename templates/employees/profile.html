@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+{% block nav_employees %}active{% endblock %}
+
+{% block content %}
+{% if employee %}
+<div class="detail-layout">
+    <div class="detail-main">
+
+        <!-- Profile Header Card -->
+        <div class="card">
+            <div class="card-header">
+                <div style="display:flex;align-items:center;gap:16px;">
+                    <!-- Avatar -->
+                    <div style="position:relative;flex-shrink:0;">
+                        {% if employee.avatar %}
+                            <img src="{{ employee.avatar.url }}" alt="Profile picture"
+                                 style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">
+                        {% else %}
+                            <div style="width:72px;height:72px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;">
+                                {{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}
+                            </div>
+                        {% endif %}
+                        <!-- Camera overlay to trigger file picker -->
+                        <label for="avatarInput" title="Change profile picture"
+                               style="position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid white;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </label>
+                        <form method="post" action="{% url 'employees:avatar_upload' %}" enctype="multipart/form-data" id="avatarForm">
+                            {% csrf_token %}
+                            <input type="file" id="avatarInput" name="avatar" accept="image/*"
+                                   style="display:none;" onchange="document.getElementById('avatarForm').submit()">
+                        </form>
+                    </div>
+                    <div>
+                        <h2 style="font-size:1.15rem;font-weight:700;">{{ employee.full_name }}</h2>
+                        <p class="text-muted">{{ employee.position.title|default:"—" }} · {{ employee.department.name|default:"—" }}</p>
+                        <span class="text-mono text-muted" style="font-size:.78rem;">{{ employee.employee_id }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'employees:profile_edit' %}" class="btn btn-primary btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    Edit Profile
+                </a>
+            </div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+                    <div>
+                        <h4 style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:14px;">Personal Information</h4>
+                        <dl class="detail-grid" style="grid-template-columns:1fr;gap:12px;">
+                            <div class="detail-item"><dt>Full Name</dt><dd>{{ employee.full_name }}</dd></div>
+                            <div class="detail-item"><dt>Email</dt><dd>{{ employee.email }}</dd></div>
+                            <div class="detail-item"><dt>Phone</dt><dd>{{ employee.phone|default:"Not provided" }}</dd></div>
+                            <div class="detail-item"><dt>Gender</dt><dd>{{ employee.get_gender_display|default:"—" }}</dd></div>
+                            <div class="detail-item"><dt>Date of Birth</dt><dd>{{ employee.date_of_birth|date:"M d, Y"|default:"—" }}</dd></div>
+                            <div class="detail-item"><dt>Address</dt><dd>{{ employee.address|default:"Not provided" }}</dd></div>
+                        </dl>
+                    </div>
+                    <div>
+                        <h4 style="font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:14px;">Employment Details</h4>
+                        <dl class="detail-grid" style="grid-template-columns:1fr;gap:12px;">
+                            <div class="detail-item"><dt>Employee ID</dt><dd class="text-mono">{{ employee.employee_id }}</dd></div>
+                            <div class="detail-item"><dt>Department</dt><dd>{{ employee.department.name|default:"—" }}</dd></div>
+                            <div class="detail-item"><dt>Position</dt><dd>{{ employee.position.title|default:"—" }}</dd></div>
+                            <div class="detail-item"><dt>Supervisor</dt><dd>{{ employee.supervisor.get_full_name|default:"—" }}</dd></div>
+                            <div class="detail-item"><dt>Hire Date</dt><dd class="text-mono">{{ employee.hire_date|date:"M d, Y" }}</dd></div>
+                            <div class="detail-item"><dt>Years of Service</dt><dd>{{ employee.years_of_service }}</dd></div>
+                            <div class="detail-item"><dt>Employment Type</dt><dd>{{ employee.get_employment_type_display }}</dd></div>
+                            <div class="detail-item"><dt>Status</dt><dd><span class="badge badge-emp-{{ employee.status }}">{{ employee.get_status_display }}</span></dd></div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Balances -->
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Leave Balances</h3></div>
+            <div class="card-body">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
+                    <div class="kpi-card" style="margin:0;">
+                        <div class="kpi-icon kpi-icon-teal">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-value">{{ employee.annual_leave_balance }}</span>
+                            <span class="kpi-label">Annual Leave Days</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card" style="margin:0;">
+                        <div class="kpi-icon kpi-icon-orange">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                        <div class="kpi-body">
+                            <span class="kpi-value">{{ employee.sick_leave_balance }}</span>
+                            <span class="kpi-label">Sick Leave Days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Emergency Contact</h3></div>
+            <div class="card-body">
+                {% if employee.emergency_contact_name %}
+                <p style="font-size:.9rem;font-weight:500;">{{ employee.emergency_contact_name }}</p>
+                <p class="text-muted" style="font-size:.85rem;">{{ employee.emergency_contact_phone|default:"No phone" }}</p>
+                {% else %}
+                <p class="text-muted" style="font-size:.85rem;">Not provided. <a href="{% url 'employees:profile_edit' %}" style="color:var(--accent);">Add now →</a></p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- My Documents -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">My Documents</h3>
+                <button class="btn btn-primary btn-sm" onclick="document.getElementById('uploadDocModal').style.display='flex'">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Upload Document
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if documents %}
+                <table class="data-table">
+                    <thead>
+                        <tr><th>Title</th><th>Type</th><th>Uploaded</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in documents %}
+                        <tr>
+                            <td>
+                                <a href="{{ doc.file.url }}" target="_blank" style="font-weight:500;display:flex;align-items:center;gap:6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                    {{ doc.title }}
+                                </a>
+                                {% if doc.notes %}<p class="text-muted" style="font-size:.75rem;margin-top:2px;">{{ doc.notes }}</p>{% endif %}
+                            </td>
+                            <td><span class="badge badge-neutral">{{ doc.get_document_type_display }}</span></td>
+                            <td class="text-muted" style="font-size:.8rem;">{{ doc.uploaded_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="action-group">
+                                    <a href="{{ doc.file.url }}" target="_blank" class="btn btn-ghost btn-xs">View</a>
+                                    <form method="post" action="{% url 'employees:document_delete' doc.pk %}" onsubmit="return confirm('Delete this document?')">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-ghost btn-xs" style="color:var(--danger);">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="empty-state" style="padding:32px;">
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <p>No documents uploaded yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="detail-sidebar">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Account</h3></div>
+            <div class="card-body">
+                <dl class="detail-list">
+                    <dt>Username</dt><dd class="text-mono">{{ request.user.username }}</dd>
+                    <dt>Role</dt><dd>{{ request.user.role }}</dd>
+                    <dt>Member Since</dt><dd>{{ request.user.date_joined|date:"M Y" }}</dd>
+                </dl>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Quick Links</h3></div>
+            <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+                <a href="{% url 'employees:profile_edit' %}" class="btn btn-primary btn-sm">Edit My Profile</a>
+                <a href="{% url 'leaves:apply' %}" class="btn btn-ghost btn-sm">Apply for Leave</a>
+                <a href="{% url 'attendance:history' %}" class="btn btn-ghost btn-sm">View Attendance</a>
+                <a href="{% url 'support:create' %}" class="btn btn-ghost btn-sm">Submit Support Ticket</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Document Modal -->
+<div id="uploadDocModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:95vw;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Upload Document</h3>
+        <form method="post" action="{% url 'employees:document_upload' employee.pk %}" enctype="multipart/form-data" class="styled-form">
+            {% csrf_token %}
+            <div class="form-field">
+                <label class="field-label">Document Title</label>
+                <input type="text" name="title" class="form-control" required placeholder="e.g. Employment Contract 2024">
+            </div>
+            <div class="form-field">
+                <label class="field-label">Document Type</label>
+                <select name="document_type" class="form-control">
+                    {% for value, label in doc_types %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
+                <label class="field-label">File <span class="text-muted">(PDF, Word, Excel, Image — max 10 MB)</span></label>
+                <input type="file" name="document" class="form-control" required accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png">
+            </div>
+            <div class="form-field">
+                <label class="field-label">Notes <span class="text-muted">(optional)</span></label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Any notes about this document…"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('uploadDocModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-state empty-state-lg">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <p>Your employee profile hasn't been set up yet.</p>
+    <p class="text-muted" style="font-size:.82rem;">Please contact HR to create your employee record.</p>
+</div>
+{% endif %}
+{% endblock %}

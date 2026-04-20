@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Supervisor Dashboard{% endblock %}
+{% block page_title %}Team Overview{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<!-- Attendance Check-in/out Bar -->
+<div class="attend-bar">
+    <div class="attend-status">
+        {% if today_attendance.is_complete %}
+        <span class="status-dot dot-success"></span>
+        <span>Checked out at <strong>{{ today_attendance.check_out|time:"H:i" }}</strong> · {{ today_attendance.working_hours|default:"0" }}h worked</span>
+        {% elif today_attendance.is_checked_in %}
+        <span class="status-dot dot-warning pulse"></span>
+        <span>Checked in at <strong>{{ today_attendance.check_in|time:"H:i" }}</strong></span>
+        {% else %}
+        <span class="status-dot dot-muted"></span>
+        <span>Not yet checked in today</span>
+        {% endif %}
+    </div>
+    <div class="attend-actions">
+        {% if not today_attendance or not today_attendance.check_in %}
+        <form method="post" action="{% url 'attendance:check_in' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Check In
+            </button>
+        </form>
+        {% elif today_attendance.check_in and not today_attendance.check_out %}
+        <form method="post" action="{% url 'attendance:check_out' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Check Out
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="kpi-grid kpi-grid-3">
+    <a href="{% url 'employees:list' %}" class="kpi-card" style="text-decoration:none;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
+        <div class="kpi-icon kpi-icon-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        </div>
+        <div class="kpi-body"><span class="kpi-value">{{ team_count }}</span><span class="kpi-label">Team Members</span></div>
+    </a>
+    <a href="{% url 'attendance:report' %}" class="kpi-card" style="text-decoration:none;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
+        <div class="kpi-icon kpi-icon-teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="kpi-body"><span class="kpi-value">{{ team_present_today }}</span><span class="kpi-label">Present Today</span></div>
+    </a>
+    <a href="{% url 'leaves:list' %}?status=pending" class="kpi-card" style="text-decoration:none;cursor:pointer;transition:box-shadow .15s;" onmouseover="this.style.boxShadow='var(--shadow)'" onmouseout="this.style.boxShadow=''">
+        <div class="kpi-icon kpi-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body"><span class="kpi-value">{{ pending_leave_approvals }}</span><span class="kpi-label">Pending Approvals</span></div>
+    </a>
+</div>
+
+<div class="quick-actions">
+    <a href="{% url 'attendance:report' %}" class="quick-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Team Attendance
+    </a>
+    <a href="{% url 'leaves:list' %}?status=pending" class="quick-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Leave Requests{% if pending_leave_approvals %} ({{ pending_leave_approvals }}){% endif %}
+    </a>
+    <a href="{% url 'shifts:calendar' %}" class="quick-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Assign Shifts
+    </a>
+    <a href="{% url 'employees:list' %}" class="quick-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        My Team
+    </a>
+    <a href="{% url 'teams:list' %}" class="quick-action">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        My Teams
+    </a>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Pending Leave Requests</h3><a href="{% url 'leaves:list' %}?status=pending" class="btn btn-ghost btn-sm">View all</a></div>
+        <div class="card-body p-0">
+            {% if recent_leave_requests %}
+            <table class="data-table">
+                <thead><tr><th>Employee</th><th>Type</th><th>Days</th><th>Dates</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for leave in recent_leave_requests %}
+                    <tr>
+                        <td><div class="cell-user"><div class="mini-avatar">{{ leave.employee.first_name|first }}{{ leave.employee.last_name|first }}</div>{{ leave.employee.get_full_name }}</div></td>
+                        <td>{{ leave.leave_type.name }}</td>
+                        <td>{{ leave.total_days }}</td>
+                        <td class="text-mono">{{ leave.start_date|date:"M d" }}–{{ leave.end_date|date:"M d" }}</td>
+                        <td><a href="{% url 'leaves:detail' leave.pk %}" class="btn btn-primary btn-xs">Review</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><p>No pending requests from your team</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Latest Notices</h3><a href="{% url 'notices:list' %}" class="btn btn-ghost btn-sm">View all</a></div>
+        <div class="card-body p-0">
+            {% if notices %}
+            <div class="notice-list">
+                {% for notice in notices %}
+                <a href="{% url 'notices:detail' notice.pk %}" class="notice-item priority-{{ notice.priority }}">
+                    <div class="notice-priority-bar"></div>
+                    <div class="notice-content"><span class="notice-title">{{ notice.title|truncatechars:45 }}</span><span class="notice-date">{{ notice.publish_date|date:"M d, Y" }}</span></div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state"><p>No notices</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

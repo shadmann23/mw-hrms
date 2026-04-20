@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilkWays Limited HRMS</title>
+    <meta http-equiv="refresh" content="0; url=pages/login.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #DB1A1A; --bg: #FFF6F6; --secondary: #2C687B; --accent: #8CC7C4; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--secondary);
+        }
+        .splash {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .logo-mark {
+            width: 56px; height: 56px;
+            background: var(--primary);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto;
+        }
+        h1 { font-size: 1.5rem; font-weight: 800; letter-spacing: -0.03em; }
+        p { font-size: 0.9rem; color: #4a8a9a; }
+        a { color: var(--primary); font-weight: 600; }
+        .dots { display: flex; gap: 6px; }
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent);
+            animation: bounce 1.2s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.2s; }
+        .dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="splash">
+        <div class="logo-mark">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3C12 3 7 8 7 13a5 5 0 0 0 10 0C17 8 12 3 12 3Z" fill="white"/>
+            </svg>
+        </div>
+        <h1>MilkWays Limited</h1>
+        <p>Loading HRMS system…</p>
+        <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <p>
+            <a href="pages/login.html">Click here</a> if not redirected automatically.
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Leave Requests{% endblock %}
+{% block page_title %}Leave Management{% endblock %}
+{% block nav_leaves %}active{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <div class="filter-bar">
+        <a href="{% url 'leaves:list' %}" class="filter-btn {% if not request.GET.status %}active{% endif %}">All</a>
+        <a href="?status=pending" class="filter-btn {% if request.GET.status == 'pending' %}active{% endif %}">Pending</a>
+        <a href="?status=approved" class="filter-btn {% if request.GET.status == 'approved' %}active{% endif %}">Approved</a>
+        <a href="?status=rejected" class="filter-btn {% if request.GET.status == 'rejected' %}active{% endif %}">Rejected</a>
+    </div>
+    <a href="{% url 'leaves:apply' %}" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Apply for Leave
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if leaves %}
+        <table class="data-table data-table-hover">
+            <thead>
+                <tr>
+                    {% if request.user.is_admin or request.user.is_supervisor %}<th>Employee</th>{% endif %}
+                    <th>Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Days</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for leave in leaves %}
+                <tr>
+                    {% if request.user.is_admin or request.user.is_supervisor %}
+                    <td>
+                        <div class="cell-user">
+                            <div class="mini-avatar">{{ leave.employee.first_name|first }}{{ leave.employee.last_name|first }}</div>
+                            {{ leave.employee.get_full_name }}
+                        </div>
+                    </td>
+                    {% endif %}
+                    <td><strong>{{ leave.leave_type.name }}</strong></td>
+                    <td class="text-mono">{{ leave.start_date|date:"M d, Y" }}</td>
+                    <td class="text-mono">{{ leave.end_date|date:"M d, Y" }}</td>
+                    <td><span class="badge badge-neutral">{{ leave.total_days }}d</span></td>
+                    <td class="text-muted">{{ leave.applied_at|date:"M d, Y" }}</td>
+                    <td><span class="badge badge-{{ leave.status }}">{{ leave.get_status_display }}</span></td>
+                    <td>
+                        <div class="action-group">
+                            <a href="{% url 'leaves:detail' leave.pk %}" class="btn btn-ghost btn-xs">View</a>
+                            {% if leave.status == 'pending' and request.user == leave.employee %}
+                            <form method="post" action="{% url 'leaves:cancel' leave.pk %}" style="display:inline" onsubmit="return confirm('Cancel this leave request?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-xs">Cancel</button>
+                            </form>
+                            {% endif %}
+                            {% if leave.status in 'pending,approved_l1' and request.user.has_role %}
+                                {% if request.user.is_admin or request.user.is_supervisor %}
+                                <a href="{% url 'leaves:detail' leave.pk %}" class="btn btn-primary btn-xs">Approve</a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "partials/pagination.html" %}
+        {% else %}
+        <div class="empty-state empty-state-lg">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <p>No leave requests found</p>
+            <a href="{% url 'leaves:apply' %}" class="btn btn-primary">Apply for Leave</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

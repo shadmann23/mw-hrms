@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Support Tickets{% endblock %}
+{% block page_title %}Support{% endblock %}
+{% block nav_support %}active{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <div class="filter-bar">
+        <a href="{% url 'support:list' %}" class="filter-btn {% if not request.GET.status %}active{% endif %}">All</a>
+        <a href="?status=open" class="filter-btn {% if request.GET.status == 'open' %}active{% endif %}">Open</a>
+        <a href="?status=in_progress" class="filter-btn {% if request.GET.status == 'in_progress' %}active{% endif %}">In Progress</a>
+        <a href="?status=resolved" class="filter-btn {% if request.GET.status == 'resolved' %}active{% endif %}">Resolved</a>
+    </div>
+    <a href="{% url 'support:create' %}" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Ticket
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if tickets %}
+        <table class="data-table data-table-hover">
+            <thead>
+                <tr>
+                    <th>Ticket #</th>
+                    {% if request.user.is_admin %}<th>Requester</th>{% endif %}
+                    <th>Subject</th>
+                    <th>Category</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr class="clickable-row" data-href="{% url 'support:detail' ticket.pk %}">
+                    <td><span class="text-mono text-accent">#{{ ticket.ticket_number }}</span></td>
+                    {% if request.user.is_admin %}
+                    <td>
+                        <div class="cell-user">
+                            <div class="mini-avatar">{{ ticket.requester.first_name|first }}{{ ticket.requester.last_name|first }}</div>
+                            {{ ticket.requester.get_full_name }}
+                        </div>
+                    </td>
+                    {% endif %}
+                    <td><strong>{{ ticket.subject|truncatechars:50 }}</strong></td>
+                    <td>{{ ticket.category.name|default:"—" }}</td>
+                    <td><span class="badge badge-priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+                    <td><span class="badge badge-ticket-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                    <td class="text-muted">{{ ticket.created_at|date:"M d, Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "partials/pagination.html" %}
+        {% else %}
+        <div class="empty-state empty-state-lg">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <p>No support tickets</p>
+            <a href="{% url 'support:create' %}" class="btn btn-primary">Submit a Ticket</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', () => window.location = row.dataset.href);
+    });
+</script>
+{% endblock %}

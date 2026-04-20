@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Terminate {{ employee.full_name }}{% endblock %}
+{% block page_title %}Employee Termination{% endblock %}
+{% block nav_employees %}active{% endblock %}
+
+{% block content %}
+<div style="max-width:680px;margin:0 auto;">
+
+    <!-- Warning Banner -->
+    <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#856404" stroke-width="2" style="flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div>
+            <strong style="font-size:.9rem;color:#856404;">This action will disable the employee's login access.</strong>
+            <p style="font-size:.82rem;color:#856404;margin-top:2px;">All records (attendance, leaves, tickets) are preserved. The employee can be reactivated later.</p>
+        </div>
+    </div>
+
+    <!-- Employee Card -->
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-body" style="display:flex;align-items:center;gap:16px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:var(--danger-light);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;flex-shrink:0;">
+                {{ employee.user.first_name|first|upper }}{{ employee.user.last_name|first|upper }}
+            </div>
+            <div>
+                <strong style="font-size:1rem;">{{ employee.full_name }}</strong>
+                <p class="text-muted" style="font-size:.85rem;">{{ employee.position.title|default:"—" }} · {{ employee.department.name|default:"—" }}</p>
+                <span class="text-mono text-muted" style="font-size:.78rem;">{{ employee.employee_id }} · Hired {{ employee.hire_date|date:"M d, Y" }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Termination Form -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Termination Details</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" class="styled-form">
+                {% csrf_token %}
+
+                <!-- Action choice: Fire vs Terminate -->
+                <div class="form-field">
+                    <label class="field-label">Action Type</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;">
+                        <label style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;" id="opt-terminate">
+                            <input type="radio" name="action" value="terminate" checked style="margin-top:2px;flex-shrink:0;" onchange="toggleAction(this)">
+                            <div>
+                                <strong style="font-size:.88rem;display:block;">Terminate Employment</strong>
+                                <span style="font-size:.78rem;color:var(--text-3);">Voluntary or company-initiated. Eligible for rehire.</span>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:10px;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius);cursor:pointer;transition:all .15s;" id="opt-fire">
+                            <input type="radio" name="action" value="fire" style="margin-top:2px;flex-shrink:0;" onchange="toggleAction(this)">
+                            <div>
+                                <strong style="font-size:.88rem;display:block;color:var(--danger);">Fire (Dismissal)</strong>
+                                <span style="font-size:.78rem;color:var(--text-3);">Termination for cause. Marked as fired in system.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-field" id="reason-field">
+                    <label class="field-label">Reason</label>
+                    <select name="termination_reason" class="form-control">
+                        <option value="resignation">Resignation</option>
+                        <option value="redundancy">Redundancy / Layoff</option>
+                        <option value="contract_end">Contract Ended</option>
+                        <option value="retirement">Retirement</option>
+                        <option value="fired">Termination for Cause</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label class="field-label">Notes / Details <span class="text-muted">(optional)</span></label>
+                    <textarea name="termination_notes" class="form-control" rows="3"
+                        placeholder="Add any relevant notes about the termination…"></textarea>
+                </div>
+
+                <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:20px;">
+                    <p style="font-size:.82rem;color:var(--text-2);font-weight:500;margin-bottom:6px;">What will happen:</p>
+                    <ul style="font-size:.8rem;color:var(--text-2);padding-left:16px;line-height:1.8;">
+                        <li>Employee's login access will be <strong>immediately disabled</strong></li>
+                        <li>All pending leave requests will be <strong>cancelled</strong></li>
+                        <li>Attendance and records are <strong>preserved</strong> for audit purposes</li>
+                        <li>Status will be updated to <strong>Terminated</strong> or <strong>Fired</strong></li>
+                        <li>Termination date set to <strong>today</strong></li>
+                    </ul>
+                </div>
+
+                <div class="form-actions">
+                    <a href="{% url 'employees:detail' employee.pk %}" class="btn btn-ghost">Cancel</a>
+                    <button type="submit" class="btn btn-danger" id="submitBtn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
+                        Terminate Employee
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAction(radio) {
+    const isFire = radio.value === 'fire';
+    document.getElementById('opt-fire').style.borderColor = isFire ? 'var(--danger)' : 'var(--border)';
+    document.getElementById('opt-terminate').style.borderColor = !isFire ? 'var(--accent)' : 'var(--border)';
+    document.getElementById('submitBtn').textContent = isFire ? '🔴 Fire Employee' : '⚠ Terminate Employee';
+    if (isFire) {
+        document.querySelector('select[name=termination_reason]').value = 'fired';
+    }
+}
+// Init
+document.getElementById('opt-terminate').style.borderColor = 'var(--accent)';
+</script>
+{% endblock %}

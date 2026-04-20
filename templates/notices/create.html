@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Post Notice{% endblock %}
+{% block page_title %}Post Notice{% endblock %}
+{% block nav_notices %}active{% endblock %}
+
+{% block content %}
+<div class="form-page-layout">
+    <div class="form-card">
+        <div class="form-card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <h2>Post New Notice</h2>
+        </div>
+        <form method="post" enctype="multipart/form-data" class="styled-form">
+            {% csrf_token %}
+            <div class="form-field">
+                <label>Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}<span class="field-error">{{ form.title.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-field">
+                <label>Content</label>
+                {{ form.content }}
+                {% if form.content.errors %}<span class="field-error">{{ form.content.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-row-2">
+                <div class="form-field">
+                    <label>Priority</label>
+                    {{ form.priority }}
+                </div>
+                <div class="form-field">
+                    <label>Visible To</label>
+                    {{ form.visibility }}
+                </div>
+            </div>
+            <div class="form-row-2">
+                <div class="form-field">
+                    <label>Publish Date</label>
+                    {{ form.publish_date }}
+                </div>
+                <div class="form-field">
+                    <label>Expiry Date <span class="text-muted">(optional)</span></label>
+                    {{ form.expiry_date }}
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Attachment <span class="text-muted">(optional)</span></label>
+                {{ form.attachment }}
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'notices:list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">Post Notice</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-sidebar">
+        <div class="info-card">
+            <h4>Visibility Guide</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+                <div style="font-size:0.82rem;padding:8px;background:var(--surface-2);border-radius:6px;"><strong>All Staff</strong> — Everyone sees this</div>
+                <div style="font-size:0.82rem;padding:8px;background:var(--surface-2);border-radius:6px;"><strong>Supervisors & Above</strong> — Managers only</div>
+                <div style="font-size:0.82rem;padding:8px;background:var(--surface-2);border-radius:6px;"><strong>HR Admins Only</strong> — Internal use</div>
+                <div style="font-size:0.82rem;padding:8px;background:var(--surface-2);border-radius:6px;"><strong>Employees Only</strong> — Staff only</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

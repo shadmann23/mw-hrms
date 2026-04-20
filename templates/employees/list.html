@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Employees{% endblock %}
+{% block page_title %}Employees{% endblock %}
+{% block nav_employees %}active{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <form method="get" class="search-form">
+        <div class="search-input-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search employees..." class="search-input">
+        </div>
+        <select name="department" class="form-control form-control-sm">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+            <option value="{{ dept.pk }}" {% if request.GET.department == dept.pk|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="form-control form-control-sm">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="on_leave">On Leave</option>
+            <option value="terminated">Terminated</option>
+        </select>
+        <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+    </form>
+    {% if request.user.is_admin %}
+    <a href="{% url 'employees:create' %}" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Employee
+    </a>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if employees %}
+        <table class="data-table data-table-hover">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>ID</th>
+                    <th>Department</th>
+                    <th>Position</th>
+                    <th>Type</th>
+                    <th>Hire Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>
+                        <div class="cell-user">
+                            {% if emp.avatar %}
+                            <img src="{{ emp.avatar.url }}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                            {% else %}
+                            <div class="mini-avatar">{{ emp.user.first_name|first }}{{ emp.user.last_name|first }}</div>
+                            {% endif %}
+                            <div>
+                                <strong>{{ emp.full_name }}</strong>
+                                <span class="text-muted d-block">{{ emp.email }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-mono">{{ emp.employee_id }}</td>
+                    <td>{{ emp.department.name|default:"—" }}</td>
+                    <td>{{ emp.position.title|default:"—" }}</td>
+                    <td><span class="badge badge-neutral">{{ emp.get_employment_type_display }}</span></td>
+                    <td class="text-mono">{{ emp.hire_date|date:"M d, Y" }}</td>
+                    <td><span class="badge badge-emp-{{ emp.status }}">{{ emp.get_status_display }}</span></td>
+                    <td>
+                        <div class="action-group">
+                            <a href="{% url 'employees:detail' emp.pk %}" class="btn btn-ghost btn-xs">View</a>
+                            {% if request.user.is_admin %}
+                            <a href="{% url 'employees:update' emp.pk %}" class="btn btn-ghost btn-xs">Edit</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "partials/pagination.html" %}
+        {% else %}
+        <div class="empty-state empty-state-lg">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+            <p>No employees found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

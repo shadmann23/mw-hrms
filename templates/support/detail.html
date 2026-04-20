@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Ticket #{{ ticket.ticket_number }}{% endblock %}
+{% block page_title %}Support Ticket{% endblock %}
+{% block nav_support %}active{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+    <div class="detail-main">
+        <!-- Ticket Info -->
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <span class="text-mono text-accent">#{{ ticket.ticket_number }}</span>
+                    <h3>{{ ticket.subject }}</h3>
+                    <p class="text-muted">Submitted by {{ ticket.requester.get_full_name }} · {{ ticket.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+                <div class="header-badges">
+                    <span class="badge badge-priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span>
+                    <span class="badge badge-ticket-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="ticket-description">{{ ticket.description }}</p>
+                {% if ticket.attachment %}
+                <a href="{{ ticket.attachment.url }}" class="attachment-link" target="_blank">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    View attachment
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Conversation -->
+        <div class="card">
+            <div class="card-header"><h3>Conversation</h3></div>
+            <div class="card-body ticket-thread">
+                {% for response in responses %}
+                <div class="thread-message {% if response.responder == request.user %}mine{% endif %} {% if response.is_internal %}internal{% endif %}">
+                    <div class="thread-avatar">{{ response.responder.first_name|first }}{{ response.responder.last_name|first }}</div>
+                    <div class="thread-bubble">
+                        <div class="thread-meta">
+                            <strong>{{ response.responder.get_full_name }}</strong>
+                            {% if response.is_internal %}<span class="badge badge-neutral">Internal</span>{% endif %}
+                            <time>{{ response.created_at|date:"M d, H:i" }}</time>
+                        </div>
+                        <p>{{ response.message }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state"><p>No responses yet</p></div>
+                {% endfor %}
+            </div>
+            {% if ticket.status != 'closed' %}
+            <div class="card-footer">
+                <form method="post" action="{% url 'support:detail' ticket.pk %}" class="reply-form">
+                    {% csrf_token %}
+                    <textarea name="message" class="form-control" rows="3" placeholder="Write a reply..." required></textarea>
+                    {% if request.user.is_admin %}
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_internal">
+                        Internal note (visible to admins only)
+                    </label>
+                    {% endif %}
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Send Reply</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="detail-sidebar">
+        <div class="card">
+            <div class="card-header"><h3>Ticket Details</h3></div>
+            <div class="card-body">
+                <dl class="detail-list">
+                    <dt>Category</dt><dd>{{ ticket.category.name|default:"—" }}</dd>
+                    <dt>Priority</dt><dd><span class="badge badge-priority-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></dd>
+                    <dt>Status</dt><dd><span class="badge badge-ticket-{{ ticket.status }}">{{ ticket.get_status_display }}</span></dd>
+                    <dt>Created</dt><dd>{{ ticket.created_at|date:"M d, Y" }}</dd>
+                    {% if ticket.resolved_at %}<dt>Resolved</dt><dd>{{ ticket.resolved_at|date:"M d, Y" }}</dd>{% endif %}
+                </dl>
+            </div>
+        </div>
+
+        {% if request.user.is_admin and ticket.status != 'resolved' and ticket.status != 'closed' %}
+        <div class="card">
+            <div class="card-body">
+                <form method="post" action="{% url 'support:resolve' ticket.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-full">Mark as Resolved</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

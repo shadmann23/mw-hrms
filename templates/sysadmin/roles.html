@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load hrms_tags %}
+{% block title %}Role Management{% endblock %}
+{% block page_title %}Role Management{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'sysadmin:dashboard' %}" class="filter-btn">Overview</a>
+    <a href="{% url 'sysadmin:roles' %}" class="filter-btn active">Role Management</a>
+    <a href="{% url 'sysadmin:departments' %}" class="filter-btn">Departments</a>
+    <a href="{% url 'sysadmin:leave_types' %}" class="filter-btn">Leave Types</a>
+    <a href="{% url 'sysadmin:shift_templates' %}" class="filter-btn">Shift Templates</a>
+    <a href="{% url 'sysadmin:support_cats' %}" class="filter-btn">Support Categories</a>
+    <a href="{% url 'sysadmin:bulk_actions' %}" class="filter-btn">Bulk Actions</a>
+    <a href="{% url 'sysadmin:system_info' %}" class="filter-btn">System Info</a>
+</div>
+
+<!-- Role explanation -->
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-header"><h3 class="card-title">System Roles Explained</h3></div>
+    <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div style="padding:16px;background:var(--danger-light);border-radius:var(--radius);border-left:3px solid var(--danger);">
+            <strong style="color:var(--danger);font-size:.9rem;">HR Administrator</strong>
+            <ul style="font-size:.78rem;color:var(--text-2);padding-left:14px;margin-top:8px;line-height:1.9;">
+                <li>Full access to all modules</li>
+                <li>Create & deactivate employees</li>
+                <li>Approve all leave requests (L2)</li>
+                <li>Post company-wide notices</li>
+                <li>Resolve support tickets</li>
+                <li>Access System Admin panel</li>
+                <li>Manage roles & departments</li>
+                <li>Fire or terminate employees</li>
+            </ul>
+        </div>
+        <div style="padding:16px;background:var(--warning-light);border-radius:var(--radius);border-left:3px solid var(--warning);">
+            <strong style="color:var(--warning);font-size:.9rem;">Supervisor</strong>
+            <ul style="font-size:.78rem;color:var(--text-2);padding-left:14px;margin-top:8px;line-height:1.9;">
+                <li>View team members' profiles</li>
+                <li>Approve team leave requests (L1)</li>
+                <li>Assign shifts to team members</li>
+                <li>View team attendance report</li>
+                <li>Create and manage teams</li>
+                <li>View notices (all + supervisors)</li>
+                <li>Submit own leave requests</li>
+            </ul>
+        </div>
+        <div style="padding:16px;background:var(--accent-light);border-radius:var(--radius);border-left:3px solid var(--accent);">
+            <strong style="color:var(--accent);font-size:.9rem;">Employee</strong>
+            <ul style="font-size:.78rem;color:var(--text-2);padding-left:14px;margin-top:8px;line-height:1.9;">
+                <li>View own profile only</li>
+                <li>Check in / check out</li>
+                <li>Submit leave requests</li>
+                <li>View own attendance history</li>
+                <li>View shift calendar (own)</li>
+                <li>View notices (all + employees)</li>
+                <li>Submit support tickets</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Users by Role -->
+{% for role in roles %}
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <h3 class="card-title">{{ role.get_name_display }}</h3>
+            <span class="badge badge-neutral">{{ role.user_count }} user{{ role.user_count|pluralize }}</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% with users=users_by_role|get_item:role.name %}
+        {% if users %}
+        <table class="data-table">
+            <thead><tr><th>User</th><th>Username</th><th>Email</th><th>Status</th><th>Change Role</th></tr></thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td><div class="cell-user"><div class="mini-avatar">{{ u.first_name|first }}{{ u.last_name|first }}</div>{{ u.get_full_name }}</div></td>
+                    <td class="text-mono">{{ u.username }}</td>
+                    <td class="text-muted">{{ u.email }}</td>
+                    <td>{% if u.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-warning">Inactive</span>{% endif %}</td>
+                    <td>
+                        <form method="post" style="display:flex;gap:6px;align-items:center;">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_pk" value="{{ u.pk }}">
+                            <select name="role" class="form-control form-control-sm" style="width:140px;">
+                                <option value="admin" {% if u.role.name == 'admin' %}selected{% endif %}>HR Administrator</option>
+                                <option value="supervisor" {% if u.role.name == 'supervisor' %}selected{% endif %}>Supervisor</option>
+                                <option value="employee" {% if u.role.name == 'employee' %}selected{% endif %}>Employee</option>
+                            </select>
+                            <button type="submit" class="btn btn-ghost btn-xs">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state" style="padding:20px;"><p class="text-muted">No users with this role</p></div>
+        {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

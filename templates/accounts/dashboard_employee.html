@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}My Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+{% load static %}
+
+<!-- Quick Actions: Check-in/out -->
+<div class="attend-bar">
+    <div class="attend-status">
+        {% if today_attendance.is_complete %}
+        <span class="status-dot dot-success"></span>
+        <span>Checked out at <strong>{{ today_attendance.check_out|time:"H:i" }}</strong> · {{ today_attendance.working_hours }}h worked</span>
+        {% elif today_attendance.is_checked_in %}
+        <span class="status-dot dot-warning pulse"></span>
+        <span>Checked in at <strong>{{ today_attendance.check_in|time:"H:i" }}</strong></span>
+        {% else %}
+        <span class="status-dot dot-muted"></span>
+        <span>Not yet checked in today</span>
+        {% endif %}
+    </div>
+    <div class="attend-actions">
+        {% if not today_attendance or not today_attendance.check_in %}
+        <form method="post" action="{% url 'attendance:check_in' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                Check In
+            </button>
+        </form>
+        {% elif today_attendance.check_in and not today_attendance.check_out %}
+        <form method="post" action="{% url 'attendance:check_out' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Check Out
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ employee_profile.annual_leave_balance|default:"—" }}</span>
+            <span class="kpi-label">Annual Leave Days</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ employee_profile.sick_leave_balance|default:"—" }}</span>
+            <span class="kpi-label">Sick Leave Days</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ pending_leaves }}</span>
+            <span class="kpi-label">Pending Leaves</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ approved_leaves }}</span>
+            <span class="kpi-label">Approved Leaves</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="dashboard-grid">
+
+    <!-- Leave Requests -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Leave Requests</h3>
+            <a href="{% url 'leaves:apply' %}" class="btn btn-primary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Apply
+            </a>
+        </div>
+        <div class="card-body p-0">
+            {% if recent_leaves %}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Duration</th>
+                        <th>Days</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for leave in recent_leaves %}
+                    <tr>
+                        <td><a href="{% url 'leaves:detail' leave.pk %}">{{ leave.leave_type.name }}</a></td>
+                        <td class="text-mono">{{ leave.start_date|date:"M d" }} – {{ leave.end_date|date:"M d, Y" }}</td>
+                        <td>{{ leave.total_days }}</td>
+                        <td><span class="badge badge-{{ leave.status }}">{{ leave.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <p>No leave requests yet</p>
+                <a href="{% url 'leaves:apply' %}" class="btn btn-outline btn-sm">Apply for Leave</a>
+            </div>
+            {% endif %}
+        </div>
+        {% if recent_leaves %}
+        <div class="card-footer"><a href="{% url 'leaves:list' %}">View all →</a></div>
+        {% endif %}
+    </div>
+
+    <!-- Notices -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Latest Notices</h3>
+            <a href="{% url 'notices:list' %}" class="btn btn-ghost btn-sm">View all</a>
+        </div>
+        <div class="card-body p-0">
+            {% if notices %}
+            <div class="notice-list">
+                {% for notice in notices %}
+                <a href="{% url 'notices:detail' notice.pk %}" class="notice-item priority-{{ notice.priority }}">
+                    <div class="notice-priority-bar"></div>
+                    <div class="notice-content">
+                        <span class="notice-title">{{ notice.title }}</span>
+                        <span class="notice-date">{{ notice.publish_date|date:"M d, Y" }}</span>
+                    </div>
+                    <span class="badge badge-{{ notice.priority }}">{{ notice.priority|capfirst }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <p>No notices at this time</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Support Tickets -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">My Support Tickets</h3>
+            <a href="{% url 'support:create' %}" class="btn btn-primary btn-sm">New Ticket</a>
+        </div>
+        <div class="card-body p-0">
+            {% if my_tickets %}
+            <table class="data-table">
+                <thead><tr><th>Ticket</th><th>Subject</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for ticket in my_tickets %}
+                    <tr>
+                        <td><a href="{% url 'support:detail' ticket.pk %}" class="text-mono">#{{ ticket.ticket_number }}</a></td>
+                        <td>{{ ticket.subject|truncatechars:40 }}</td>
+                        <td><span class="badge badge-ticket-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <p>No support tickets yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

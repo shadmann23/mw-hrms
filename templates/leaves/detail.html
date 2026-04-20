@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Leave Request #{{ leave.pk }}{% endblock %}
+{% block page_title %}Leave Request{% endblock %}
+{% block nav_leaves %}active{% endblock %}
+
+{% block content %}
+<div class="detail-layout">
+    <div class="detail-main">
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h3>{{ leave.leave_type.name }} Request</h3>
+                    <p class="text-muted">Submitted {{ leave.applied_at|date:"M d, Y H:i" }}</p>
+                </div>
+                <span class="badge badge-lg badge-{{ leave.status }}">{{ leave.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <dl class="detail-grid">
+                    <div class="detail-item"><dt>Employee</dt><dd>{{ leave.employee.get_full_name }}</dd></div>
+                    <div class="detail-item"><dt>Leave Type</dt><dd>{{ leave.leave_type.name }} ({{ leave.leave_type.code }})</dd></div>
+                    <div class="detail-item"><dt>Start Date</dt><dd class="text-mono">{{ leave.start_date|date:"M d, Y" }}</dd></div>
+                    <div class="detail-item"><dt>End Date</dt><dd class="text-mono">{{ leave.end_date|date:"M d, Y" }}</dd></div>
+                    <div class="detail-item"><dt>Total Days</dt><dd><span class="badge badge-neutral">{{ leave.total_days }} day{{ leave.total_days|pluralize }}</span></dd></div>
+                    <div class="detail-item"><dt>Paid Leave</dt><dd>{{ leave.leave_type.is_paid|yesno:"Yes,No" }}</dd></div>
+                    <div class="detail-item detail-item-full"><dt>Reason</dt><dd>{{ leave.reason }}</dd></div>
+                    {% if leave.attachment %}
+                    <div class="detail-item"><dt>Attachment</dt><dd><a href="{{ leave.attachment.url }}" class="link" target="_blank">Download document</a></dd></div>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        <!-- Approval Timeline -->
+        <div class="card">
+            <div class="card-header"><h3>Approval Timeline</h3></div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item completed">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <strong>Request Submitted</strong>
+                            <span class="text-muted">{{ leave.applied_at|date:"M d, Y H:i" }} by {{ leave.employee.get_full_name }}</span>
+                        </div>
+                    </div>
+                    {% for approval in approvals %}
+                    <div class="timeline-item {% if approval.action == 'approve' %}approved{% else %}rejected{% endif %}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                            <strong>Level {{ approval.level }} — {% if approval.action == 'approve' %}Approved{% else %}Rejected{% endif %} by {{ approval.approver.get_full_name }}</strong>
+                            <span class="text-muted">{{ approval.acted_at|date:"M d, Y H:i" }}</span>
+                            {% if approval.comments %}<p class="timeline-note">"{{ approval.comments }}"</p>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% if leave.status == 'pending' or leave.status == 'approved_l1' %}
+                    <div class="timeline-item pending">
+                        <div class="timeline-dot timeline-dot-pending"></div>
+                        <div class="timeline-content">
+                            <strong>{% if leave.status == 'approved_l1' %}Awaiting HR Final Approval{% else %}Awaiting Approval{% endif %}</strong>
+                            <span class="text-muted">In queue</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Actions -->
+    <div class="detail-sidebar">
+        {% if can_approve %}
+        <div class="card">
+            <div class="card-header"><h3>Take Action</h3></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'leaves:approve' leave.pk %}" class="styled-form">
+                    {% csrf_token %}
+                    <div class="form-field">
+                        <label class="field-label">Decision</label>
+                        <div class="radio-group">
+                            <label class="radio-option radio-approve">
+                                <input type="radio" name="action" value="approve" required>
+                                <span>✓ Approve</span>
+                            </label>
+                            <label class="radio-option radio-reject">
+                                <input type="radio" name="action" value="reject">
+                                <span>✕ Reject</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-field">
+                        <label class="field-label">Comments <span class="text-muted">(optional)</span></label>
+                        <textarea name="comments" class="form-control" rows="3" placeholder="Add comments…"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Submit Decision</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if leave.status == 'pending' and request.user == leave.employee %}
+        <div class="card">
+            <div class="card-body">
+                <form method="post" action="{% url 'leaves:cancel' leave.pk %}" onsubmit="return confirm('Cancel this leave request?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-full">Cancel Request</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header"><h3>Leave Balance</h3></div>
+            <div class="card-body">
+                {% with emp=leave.employee.employee_profile %}
+                {% if emp %}
+                <div class="balance-item"><span>Annual</span><strong>{{ emp.annual_leave_balance }} days</strong></div>
+                <div class="balance-item"><span>Sick</span><strong>{{ emp.sick_leave_balance }} days</strong></div>
+                {% else %}
+                <p class="text-muted" style="font-size:.82rem;">No profile found</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+
+        <a href="{% url 'leaves:list' %}" class="btn btn-ghost btn-full">← Back to Leaves</a>
+    </div>
+</div>
+{% endblock %}

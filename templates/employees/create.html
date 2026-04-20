@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Add Employee{% endblock %}
+{% block page_title %}Add New Employee{% endblock %}
+{% block nav_employees %}active{% endblock %}
+
+{% block content %}
+<div class="form-card" style="max-width:760px;">
+    <div class="form-card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        <h2>New Employee</h2>
+    </div>
+    <form method="post" class="styled-form">
+        {% csrf_token %}
+
+        <h4 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);margin-bottom:14px;">Account Credentials</h4>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>First Name</label>
+                {{ form.first_name }}
+            </div>
+            <div class="form-field">
+                <label>Last Name</label>
+                {{ form.last_name }}
+            </div>
+        </div>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>Username</label>
+                {{ form.username }}
+            </div>
+            <div class="form-field">
+                <label>Email</label>
+                {{ form.email }}
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Password</label>
+            {{ form.password }}
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+        <h4 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);margin-bottom:14px;">Personal Information</h4>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>Employee ID</label>
+                {{ form.employee_id }}
+                {% if form.employee_id.errors %}<span class="field-error">{{ form.employee_id.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-field">
+                <label>National ID</label>
+                {{ form.national_id }}
+            </div>
+        </div>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>Date of Birth</label>
+                {{ form.date_of_birth }}
+            </div>
+            <div class="form-field">
+                <label>Gender</label>
+                {{ form.gender }}
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Phone</label>
+            {{ form.phone }}
+        </div>
+        <div class="form-field">
+            <label>Address</label>
+            {{ form.address }}
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+        <h4 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);margin-bottom:14px;">Employment Details</h4>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>Department</label>
+                {{ form.department }}
+            </div>
+            <div class="form-field">
+                <label>Position</label>
+                {{ form.position }}
+            </div>
+        </div>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>Supervisor</label>
+                {{ form.supervisor }}
+            </div>
+            <div class="form-field">
+                <label>Employment Type</label>
+                {{ form.employment_type }}
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Hire Date</label>
+            {{ form.hire_date }}
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border);margin:20px 0;">
+        <h4 style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-3);margin-bottom:14px;">Emergency Contact</h4>
+        <div class="form-row-2">
+            <div class="form-field">
+                <label>Contact Name</label>
+                {{ form.emergency_contact_name }}
+            </div>
+            <div class="form-field">
+                <label>Contact Phone</label>
+                {{ form.emergency_contact_phone }}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{% url 'employees:list' %}" class="btn btn-ghost">Cancel</a>
+            <button type="submit" class="btn btn-primary">Create Employee</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

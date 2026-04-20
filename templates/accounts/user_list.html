@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}User Management{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+
+{% if pending_count %}
+<div class="alert alert-warning" style="margin-bottom:20px;">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span><strong>{{ pending_count }}</strong> account{{ pending_count|pluralize }} awaiting approval.</span>
+    <a href="?status=inactive" style="margin-left:8px;color:inherit;font-weight:600;text-decoration:underline;">Review now →</a>
+</div>
+{% endif %}
+
+<div class="page-toolbar">
+    <form method="get" class="search-form">
+        <div class="search-input-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search users..." class="search-input">
+        </div>
+        <select name="role" class="form-control form-control-sm">
+            <option value="">All Roles</option>
+            {% for role in roles %}
+            <option value="{{ role.name }}" {% if request.GET.role == role.name %}selected{% endif %}>{{ role }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="form-control form-control-sm">
+            <option value="">All Status</option>
+            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Pending / Inactive</option>
+        </select>
+        <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+        {% if request.GET.q or request.GET.role or request.GET.status %}
+        <a href="{% url 'accounts:user_list' %}" class="btn btn-ghost btn-sm">Clear</a>
+        {% endif %}
+    </form>
+    <!-- "Add Employee" goes to the full employee create form (user + profile in one step) -->
+    <a href="{% url 'employees:create' %}" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Employee
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if users %}
+        <table class="data-table data-table-hover">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Employee Profile</th>
+                    <th>Joined</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="cell-user">
+                            <div class="mini-avatar" style="{% if not u.is_active %}opacity:0.45;{% endif %}">
+                                {{ u.first_name|first|upper }}{{ u.last_name|first|upper }}
+                            </div>
+                            <div>
+                                <strong>{{ u.get_full_name|default:u.username }}</strong>
+                                <span class="text-muted d-block" style="font-size:0.75rem;">{{ u.email }}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-mono">{{ u.username }}</td>
+                    <td>
+                        {% if u.role %}
+                        <span class="badge badge-neutral">{{ u.role }}</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.pk in has_employee_profile %}
+                        <span class="badge badge-success">✓ Linked</span>
+                        {% else %}
+                        <span class="badge badge-warning">No profile</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ u.date_joined|date:"M d, Y" }}</td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-warning">Pending Approval</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <a href="{% url 'accounts:user_edit' u.pk %}" class="btn btn-ghost btn-xs">Edit</a>
+
+                            {% if not u.is_active %}
+                            <form method="post" action="{% url 'accounts:user_approve' u.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success btn-xs">Approve</button>
+                            </form>
+                            {% endif %}
+
+                            {% if u.is_active and u.pk not in has_employee_profile %}
+                            <!-- User has an account but no employee profile — let admin create one -->
+                            <form method="post" action="{% url 'accounts:user_make_employee' u.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-primary btn-xs">Make Employee</button>
+                            </form>
+                            {% endif %}
+
+                            {% if u.is_active and u != request.user %}
+                            <form method="post" action="{% url 'accounts:user_deactivate' u.pk %}" style="display:inline;" onsubmit="return confirm('Deactivate {{ u.get_full_name }}?')">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-xs">Deactivate</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "partials/pagination.html" %}
+        {% else %}
+        <div class="empty-state empty-state-lg">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <p>No users found</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

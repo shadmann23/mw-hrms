@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Attendance History{% endblock %}
+{% block page_title %}Attendance{% endblock %}
+{% block nav_attendance %}active{% endblock %}
+
+{% block content %}
+<div class="kpi-grid kpi-grid-3">
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ present_count }}</span>
+            <span class="kpi-label">Days Present</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-orange">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ late_count }}</span>
+            <span class="kpi-label">Late Check-ins</span>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon kpi-icon-purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="kpi-body">
+            <span class="kpi-value">{{ half_day_count }}</span>
+            <span class="kpi-label">Half Days</span>
+        </div>
+    </div>
+</div>
+
+{% if today_record %}
+<div class="today-banner">
+    <div>
+        <strong>Today — </strong>
+        {% if today_record.is_complete %}
+            <span class="text-success">Completed · {{ today_record.working_hours|default:"0" }}h worked</span>
+        {% elif today_record.is_checked_in %}
+            <span class="text-warning">Checked in at {{ today_record.check_in|time:"H:i" }} · still active</span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Attendance History</h3>
+        <form method="get" class="inline-form">
+            <select name="month" class="form-control form-control-sm">
+                {% for m, label in month_choices %}
+                <option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="year" class="form-control form-control-sm">
+                {% for y in year_range %}
+                <option value="{{ y }}" {% if y == current_year %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-ghost btn-sm">Filter</button>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        {% if records %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Check In</th>
+                    <th>Check Out</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td class="text-mono">{{ record.date|date:"D, M d Y" }}</td>
+                    <td class="text-mono">{{ record.check_in|time:"H:i"|default:"—" }}</td>
+                    <td class="text-mono">{{ record.check_out|time:"H:i"|default:"—" }}</td>
+                    <td>{% if record.working_hours %}<span class="text-mono">{{ record.working_hours }}h</span>{% else %}—{% endif %}</td>
+                    <td><span class="badge badge-attend-{{ record.status }}">{{ record.get_status_display }}</span></td>
+                    <td class="text-muted">{{ record.notes|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% include "partials/pagination.html" %}
+        {% else %}
+        <div class="empty-state">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <p>No attendance records for this period</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Apply for Leave{% endblock %}
+{% block page_title %}Apply for Leave{% endblock %}
+{% block nav_leaves %}active{% endblock %}
+
+{% block content %}
+<div class="form-page-layout">
+    <div class="form-card">
+        <div class="form-card-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <h2>New Leave Request</h2>
+        </div>
+        <form method="post" action="{% url 'leaves:apply' %}" enctype="multipart/form-data" class="styled-form">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-field">
+                    <label>Leave Type</label>
+                    {{ form.leave_type }}
+                    {% if form.leave_type.errors %}<span class="field-error">{{ form.leave_type.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-row form-row-2">
+                <div class="form-field">
+                    <label>Start Date</label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}<span class="field-error">{{ form.start_date.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-field">
+                    <label>End Date</label>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}<span class="field-error">{{ form.end_date.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+            <div class="form-field">
+                <label>Reason</label>
+                {{ form.reason }}
+                {% if form.reason.errors %}<span class="field-error">{{ form.reason.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-field">
+                <label>Supporting Document <span class="text-muted">(optional)</span></label>
+                {{ form.attachment }}
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'leaves:list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">Submit Request</button>
+            </div>
+        </form>
+    </div>
+
+    {% if request.user.employee_profile %}
+    <div class="info-sidebar">
+        <div class="info-card">
+            <h4>Your Leave Balance</h4>
+            <div class="balance-item">
+                <span>Annual Leave</span>
+                <strong>{{ request.user.employee_profile.annual_leave_balance }} days</strong>
+            </div>
+            <div class="balance-item">
+                <span>Sick Leave</span>
+                <strong>{{ request.user.employee_profile.sick_leave_balance }} days</strong>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-calculate days
+    const startInput = document.getElementById('id_start_date');
+    const endInput = document.getElementById('id_end_date');
+
+    function calcDays() {
+        if (startInput.value && endInput.value) {
+            const start = new Date(startInput.value);
+            const end = new Date(endInput.value);
+            const diff = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+            if (diff > 0) {
+                document.getElementById('days-preview')?.remove();
+                const hint = document.createElement('span');
+                hint.id = 'days-preview';
+                hint.className = 'field-hint';
+                hint.textContent = `${diff} day${diff > 1 ? 's' : ''} selected`;
+                endInput.parentElement.parentElement.appendChild(hint);
+            }
+        }
+    }
+    startInput?.addEventListener('change', calcDays);
+    endInput?.addEventListener('change', calcDays);
+</script>
+{% endblock %}

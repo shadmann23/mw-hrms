@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Leave Types{% endblock %}
+{% block page_title %}Leave Types{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px;margin-bottom:24px;flex-wrap:wrap;">
+    <a href="{% url 'sysadmin:dashboard' %}" class="filter-btn">Overview</a>
+    <a href="{% url 'sysadmin:roles' %}" class="filter-btn">Role Management</a>
+    <a href="{% url 'sysadmin:departments' %}" class="filter-btn">Departments</a>
+    <a href="{% url 'sysadmin:leave_types' %}" class="filter-btn active">Leave Types</a>
+    <a href="{% url 'sysadmin:shift_templates' %}" class="filter-btn">Shift Templates</a>
+    <a href="{% url 'sysadmin:support_cats' %}" class="filter-btn">Support Categories</a>
+    <a href="{% url 'sysadmin:bulk_actions' %}" class="filter-btn">Bulk Actions</a>
+    <a href="{% url 'sysadmin:system_info' %}" class="filter-btn">System Info</a>
+</div>
+
+<div class="page-toolbar">
+    <h3 style="font-size:.9rem;font-weight:600;">{{ leave_types|length }} Leave Type{{ leave_types|length|pluralize }}</h3>
+    <button class="btn btn-primary" onclick="document.getElementById('createLTModal').style.display='flex'">+ New Leave Type</button>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="data-table data-table-hover">
+            <thead><tr><th>Code</th><th>Name</th><th>Max Days/Year</th><th>Paid</th><th>Docs Required</th><th>Usage</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for lt in leave_types %}
+                <tr>
+                    <td class="text-mono"><strong>{{ lt.code }}</strong></td>
+                    <td>{{ lt.name }}{% if lt.description %}<p class="text-muted" style="font-size:.75rem;">{{ lt.description|truncatechars:40 }}</p>{% endif %}</td>
+                    <td><span class="badge badge-neutral">{{ lt.max_days_per_year }} days</span></td>
+                    <td>{% if lt.is_paid %}<span class="badge badge-success">Paid</span>{% else %}<span class="badge badge-neutral">Unpaid</span>{% endif %}</td>
+                    <td>{% if lt.requires_documentation %}<span class="badge badge-warning">Required</span>{% else %}<span class="text-muted">No</span>{% endif %}</td>
+                    <td><span class="badge badge-neutral">{{ lt.requests_count }} requests</span></td>
+                    <td>{% if lt.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-neutral">Disabled</span>{% endif %}</td>
+                    <td>
+                        <div class="action-group">
+                            <button class="btn btn-ghost btn-xs" onclick="openEditLT({{ lt.pk }},'{{ lt.name }}','{{ lt.max_days_per_year }}',{{ lt.is_paid|yesno:'true,false' }},{{ lt.requires_documentation|yesno:'true,false' }},'{{ lt.description }}')">Edit</button>
+                            <form method="post" action="{% url 'sysadmin:leave_type_toggle' lt.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-ghost btn-xs">{% if lt.is_active %}Disable{% else %}Enable{% endif %}</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div id="createLTModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:95vw;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Create Leave Type</h3>
+        <form method="post" action="{% url 'sysadmin:leave_type_create' %}" class="styled-form">
+            {% csrf_token %}
+            <div class="form-row-2">
+                <div class="form-field"><label class="field-label">Name</label><input type="text" name="name" class="form-control" required placeholder="e.g. Study Leave"></div>
+                <div class="form-field"><label class="field-label">Code</label><input type="text" name="code" class="form-control" required placeholder="e.g. STL" style="text-transform:uppercase;"></div>
+            </div>
+            <div class="form-field"><label class="field-label">Max Days Per Year</label><input type="number" name="max_days" class="form-control" value="14" min="1"></div>
+            <div class="form-field"><label class="field-label">Description</label><textarea name="description" class="form-control" rows="2"></textarea></div>
+            <div style="display:flex;gap:20px;margin-bottom:16px;">
+                <label class="checkbox-label"><input type="checkbox" name="is_paid" checked> Paid Leave</label>
+                <label class="checkbox-label"><input type="checkbox" name="requires_documentation"> Requires Documentation</label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('createLTModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div id="editLTModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;">
+    <div style="background:var(--surface);border-radius:var(--radius-lg);padding:28px;width:480px;max-width:95vw;">
+        <h3 style="margin-bottom:20px;font-size:1rem;font-weight:600;">Edit Leave Type</h3>
+        <form method="post" id="editLTForm" class="styled-form">
+            {% csrf_token %}
+            <div class="form-field"><label class="field-label">Name</label><input type="text" name="name" id="editLTName" class="form-control" required></div>
+            <div class="form-field"><label class="field-label">Max Days Per Year</label><input type="number" name="max_days" id="editLTDays" class="form-control" min="1"></div>
+            <div class="form-field"><label class="field-label">Description</label><textarea name="description" id="editLTDesc" class="form-control" rows="2"></textarea></div>
+            <div style="display:flex;gap:20px;margin-bottom:16px;">
+                <label class="checkbox-label"><input type="checkbox" name="is_paid" id="editLTPaid"> Paid Leave</label>
+                <label class="checkbox-label"><input type="checkbox" name="requires_documentation" id="editLTDoc"> Requires Documentation</label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('editLTModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openEditLT(pk, name, days, paid, doc, desc) {
+    document.getElementById('editLTForm').action = `/sysadmin/leave-types/${pk}/edit/`;
+    document.getElementById('editLTName').value = name;
+    document.getElementById('editLTDays').value = days;
+    document.getElementById('editLTPaid').checked = paid;
+    document.getElementById('editLTDoc').checked = doc;
+    document.getElementById('editLTDesc').value = desc;
+    document.getElementById('editLTModal').style.display = 'flex';
+}
+</script>
+{% endblock %}

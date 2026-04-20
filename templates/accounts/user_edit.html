@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ target_user.get_full_name }}{% endblock %}
+{% block page_title %}Edit User Account{% endblock %}
+
+{% block content %}
+<div class="form-page-layout">
+    <div class="form-card">
+        <div class="form-card-header">
+            <div style="width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;">
+                {{ target_user.first_name|first|upper }}{{ target_user.last_name|first|upper }}
+            </div>
+            <div>
+                <h2>{{ target_user.get_full_name }}</h2>
+                <p class="text-muted" style="font-size:0.8rem;">@{{ target_user.username }}</p>
+            </div>
+        </div>
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+
+            <div class="form-row-2">
+                <div class="form-field">
+                    <label class="field-label">First Name</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}<span class="field-error">{{ form.first_name.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-field">
+                    <label class="field-label">Last Name</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}<span class="field-error">{{ form.last_name.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label class="field-label">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}<span class="field-error">{{ form.email.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-field">
+                <label class="field-label">Role</label>
+                {{ form.role }}
+                <span class="field-hint">Changing the role takes effect immediately on next login.</span>
+            </div>
+
+            <div class="form-field">
+                <label class="field-label">New Password <span class="text-muted">(leave blank to keep current)</span></label>
+                {{ form.new_password }}
+                {% if form.new_password.errors %}<span class="field-error">{{ form.new_password.errors.0 }}</span>{% endif %}
+            </div>
+
+            <div class="form-field">
+                <label class="checkbox-label">
+                    {{ form.is_active }}
+                    <span>Account Active</span>
+                </label>
+                {% if not target_user.is_active %}
+                <span class="field-hint" style="color:var(--warning);">This account is currently inactive / pending approval.</span>
+                {% endif %}
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-sidebar">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Account Info</h3></div>
+            <div class="card-body">
+                <dl class="detail-list">
+                    <dt>Username</dt><dd class="text-mono">{{ target_user.username }}</dd>
+                    <dt>Joined</dt><dd>{{ target_user.date_joined|date:"M d, Y" }}</dd>
+                    <dt>Last Login</dt><dd>{{ target_user.last_login|date:"M d, Y H:i"|default:"Never" }}</dd>
+                    <dt>Last IP</dt><dd class="text-mono">{{ target_user.last_login_ip|default:"—" }}</dd>
+                    <dt>Status</dt>
+                    <dd>
+                        {% if target_user.is_active %}
+                        <span class="badge badge-success">Active</span>
+                        {% else %}
+                        <span class="badge badge-warning">Inactive</span>
+                        {% endif %}
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        {% if not target_user.is_active %}
+        <div class="card">
+            <div class="card-body">
+                <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:10px;">Approve this account to allow the user to log in.</p>
+                <form method="post" action="{% url 'accounts:user_approve' target_user.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-full">Approve Account</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
